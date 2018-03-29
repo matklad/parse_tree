@@ -1,0 +1,8 @@
+[package]
+name = "parse_tree"
+version = "0.0.1"
+authors = ["Aleksey Kladov <aleksey.kladov@gmail.com>"]
+description = "A non-abstract syntax tree type"
+
+[dependencies]
+lazy_static = "1"
