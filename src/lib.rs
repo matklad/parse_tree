@@ -1,3 +1,6 @@
+//! `parse_tree` is a library to represent so-called parse tree.
+//! A parse tree is a non-abstract AST: it's a generic syntax tree
+//! which remembers all whitespace, comments and other trivia.
 #[macro_use]
 extern crate lazy_static;
 
@@ -54,14 +57,14 @@ pub struct Token {
     pub len: TextUnit,
 }
 
-/// The contents of a source file.
+/// The parse tree for a single source file.
 #[derive(Debug)]
 pub struct ParseTree {
     nodes: Vec<NodeData>,
 }
 
 impl ParseTree {
-    /// The root node of this source file.
+    /// The root node of this tree.
     pub fn root<'t>(&'t self) -> Node<'t> {
         assert!(!self.nodes.is_empty());
         Node {
@@ -71,7 +74,7 @@ impl ParseTree {
     }
 }
 
-/// A reference to a token in a source file.
+/// A reference to a node in a parse tree.
 #[derive(Clone, Copy)]
 pub struct Node<'t> {
     file: &'t ParseTree,

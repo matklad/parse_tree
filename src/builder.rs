@@ -1,15 +1,11 @@
-//! This module provides a way to construct a `File`.
-//! It is intended to be completely decoupled from the
-//! parser, so as to allow to evolve the tree representation
-//! and the parser algorithm independently.
-//!
-//! The `Sink` trait is the bridge between the parser and the
-//! tree builder: the parser produces a stream of events like
-//! `start node`, `finish node`, and `Builder` converts
-//! this stream to a real tree.
 use {Symbol, TextRange, TextUnit};
 use super::{NodeData, NodeIdx, ParseTree};
 
+/// A builder for creating parse trees by a top-down walk over
+/// the tree nodes. Each `start_internal` call must be paired with a
+/// `finish_internal` call. Nodes created within a pair of
+/// `start_internal` / `finish_internal` calls become children of
+/// the internal node.
 #[derive(Debug)]
 pub struct Builder {
     nodes: Vec<NodeData>,
@@ -18,6 +14,7 @@ pub struct Builder {
 }
 
 impl Builder {
+    /// Create a new builder.
     pub fn new() -> Builder {
         Builder {
             nodes: Vec::new(),
@@ -26,6 +23,8 @@ impl Builder {
         }
     }
 
+    /// Completes the building process and yields a `ParseTree.
+    /// Panics if there's unmatched `start_internal` calls.
     pub fn finish(self) -> ParseTree {
         assert!(
             self.in_progress.is_empty(),
@@ -38,6 +37,7 @@ impl Builder {
         ParseTree { nodes: self.nodes }
     }
 
+    /// Creates a new leaf node.
     pub fn leaf(&mut self, symbol: Symbol, len: TextUnit) {
         let leaf = NodeData {
             symbol,
@@ -51,6 +51,7 @@ impl Builder {
         self.add_len(id);
     }
 
+    /// Start a new internal node.
     pub fn start_internal(&mut self, symbol: Symbol) {
         let node = NodeData {
             symbol,
@@ -67,6 +68,8 @@ impl Builder {
         self.in_progress.push((id, None))
     }
 
+    /// Complete an internal node.
+    /// Panics if there's no matching `start_internal` call.
     pub fn finish_internal(&mut self) {
         let (id, _) = self.in_progress
             .pop()
