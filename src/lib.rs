@@ -6,24 +6,23 @@ extern crate lazy_static;
 
 use std::{cmp, fmt, ops, ptr};
 use std::sync::Mutex;
-use std::collections::hash_map::{HashMap, Entry};
+use std::collections::hash_map::{Entry, HashMap};
 
 mod text;
-mod builder;
+mod top_down_builder;
+mod bottom_up_builder;
 
 pub use text::{TextRange, TextUnit};
-pub use builder::Builder;
+pub use top_down_builder::TopDownBuilder;
+pub use bottom_up_builder::BottomUpBuilder;
 
 /// A type of a syntactic construct, including both leaf tokens
 /// and composite nodes, like "a comma" or "a function".
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Symbol(
-    #[doc(hidden)]
-    pub u32
-);
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct Symbol(#[doc(hidden)] pub u32);
 
 struct SymbolInfo {
-    name: &'static str
+    name: &'static str,
 }
 
 lazy_static! {
@@ -48,7 +47,7 @@ pub fn register_symbol(symbol: Symbol, name: &'static str) {
 macro_rules! symbols {
     ( $register:ident $($name:ident $id:expr)*) => {
         $(
-            const $name: $crate::Symbol = $crate::Symbol($id);
+            pub const $name: $crate::Symbol = $crate::Symbol($id);
         )*
 
         pub fn $register() {
@@ -68,6 +67,12 @@ impl Symbol {
     }
 }
 
+impl fmt::Debug for Symbol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "`{}", self.name())
+    }
+}
+
 /// A token of source code.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Token {
@@ -80,6 +85,7 @@ pub struct Token {
 /// The parse tree for a single source file.
 #[derive(Debug)]
 pub struct ParseTree {
+    root: NodeIdx,
     nodes: Vec<NodeData>,
 }
 
@@ -89,7 +95,7 @@ impl ParseTree {
         assert!(!self.nodes.is_empty());
         Node {
             file: self,
-            idx: NodeIdx(0),
+            idx: self.root,
         }
     }
 }
@@ -144,25 +150,25 @@ impl<'t> fmt::Debug for Node<'t> {
 
 /// Debug representation of a subtree at `node`.
 pub fn debug_dump(node: Node, text: &str) -> String {
-        let mut result = String::new();
-        go(node, &mut result, 0, text);
-        return result;
+    let mut result = String::new();
+    go(node, &mut result, 0, text);
+    return result;
 
-        fn go(node: Node, buff: &mut String, level: usize, text: &str) {
-            buff.push_str(&String::from("  ").repeat(level));
-            buff.push_str(&format!("{:?}", node));
+    fn go(node: Node, buff: &mut String, level: usize, text: &str) {
+        buff.push_str(&String::from("  ").repeat(level));
+        buff.push_str(&format!("{:?}", node));
 
-            if node.children().next().is_none() {
-                let node_text = &text[node.range()];
-                if !node_text.chars().all(char::is_whitespace) {
-                    buff.push_str(&format!(" {:?}", node_text));
-                }
-            }
-            buff.push('\n');
-            for child in node.children() {
-                go(child, buff, level + 1, text)
+        if node.children().next().is_none() {
+            let node_text = &text[node.range()];
+            if !node_text.chars().all(char::is_whitespace) {
+                buff.push_str(&format!(" {:?}", node_text));
             }
         }
+        buff.push('\n');
+        for child in node.children() {
+            go(child, buff, level + 1, text)
+        }
+    }
 }
 
 impl<'f> cmp::PartialEq<Node<'f>> for Node<'f> {
@@ -212,4 +218,9 @@ impl ops::IndexMut<NodeIdx> for Vec<NodeData> {
     fn index_mut(&mut self, NodeIdx(idx): NodeIdx) -> &mut NodeData {
         &mut self[idx as usize]
     }
+}
+
+fn fill<T>(slot: &mut Option<T>, value: T) {
+    assert!(slot.is_none());
+    *slot = Some(value);
 }

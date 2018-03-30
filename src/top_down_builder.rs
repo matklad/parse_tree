@@ -1,4 +1,4 @@
-use {Symbol, TextRange, TextUnit};
+use {Symbol, TextRange, TextUnit, fill};
 use super::{NodeData, NodeIdx, ParseTree};
 
 /// A builder for creating parse trees by a top-down walk over
@@ -7,16 +7,16 @@ use super::{NodeData, NodeIdx, ParseTree};
 /// `start_internal` / `finish_internal` calls become children of
 /// the internal node.
 #[derive(Debug)]
-pub struct Builder {
+pub struct TopDownBuilder {
     nodes: Vec<NodeData>,
     in_progress: Vec<(NodeIdx, Option<NodeIdx>)>,
     pos: TextUnit,
 }
 
-impl Builder {
+impl TopDownBuilder {
     /// Create a new builder.
-    pub fn new() -> Builder {
-        Builder {
+    pub fn new() -> TopDownBuilder {
+        TopDownBuilder {
             nodes: Vec::new(),
             in_progress: Vec::new(),
             pos: TextUnit::new(0),
@@ -34,7 +34,7 @@ impl Builder {
                 .map(|&(idx, _)| self.nodes[idx].symbol)
                 .collect::<Vec<_>>()
         );
-        ParseTree { nodes: self.nodes }
+        ParseTree { nodes: self.nodes, root: NodeIdx(0) }
     }
 
     /// Creates a new leaf node.
@@ -114,11 +114,6 @@ impl Builder {
         let idx = self.current_id();
         &mut self.nodes[idx]
     }
-}
-
-fn fill<T>(slot: &mut Option<T>, value: T) {
-    assert!(slot.is_none());
-    *slot = Some(value);
 }
 
 fn grow(left: &mut TextRange, right: TextRange) {
