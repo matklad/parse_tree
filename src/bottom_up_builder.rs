@@ -59,14 +59,14 @@ impl BottomUpBuilder {
             self.nodes[self.stack[n - n_nodes]].range.start(),
             self.nodes[self.stack[n - 1]].range.end(),
         );
+        let first_child = self.stack[n - n_nodes];
         let parent = self.new_node(NodeData {
             symbol,
             range,
             parent: None,
-            first_child: Some(NodeIdx((n - n_nodes) as u32)),
+            first_child: Some(first_child),
             next_sibling: None,
         });
-
         {
             let children = &self.stack[n - n_nodes..n];
             for &child in children.iter() {

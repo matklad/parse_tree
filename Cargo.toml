@@ -1,6 +1,6 @@
 [package]
 name = "parse_tree"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Aleksey Kladov <aleksey.kladov@gmail.com>"]
 description = "A non-abstract syntax tree type"
 license = "MIT OR Apache-2.0"
