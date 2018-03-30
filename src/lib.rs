@@ -17,7 +17,10 @@ pub use builder::Builder;
 /// A type of a syntactic construct, including both leaf tokens
 /// and composite nodes, like "a comma" or "a function".
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Symbol(u32);
+pub struct Symbol(
+    #[doc(hidden)]
+    pub u32
+);
 
 struct SymbolInfo {
     name: &'static str
@@ -28,21 +31,35 @@ lazy_static! {
         = Mutex::new(HashMap::new());
 }
 
-impl Symbol {
-    pub fn new(id: u32, name: &'static str) -> Symbol {
-        let s = Symbol(id);
-        let mut symbols = SYMBOLS.lock().unwrap();
-        match symbols.entry(s) {
-            Entry::Occupied(_) => {
-                panic!("Duplicate symbol {} {}", id, name);
-            }
-            Entry::Vacant(entry) => {
-                entry.insert(SymbolInfo { name });
-            }
+#[doc(hidden)]
+pub fn register_symbol(symbol: Symbol, name: &'static str) {
+    let mut symbols = SYMBOLS.lock().unwrap();
+    match symbols.entry(symbol) {
+        Entry::Occupied(_) => {
+            panic!("Duplicate symbol {} {}", symbol.0, name);
         }
-        s
+        Entry::Vacant(entry) => {
+            entry.insert(SymbolInfo { name });
+        }
     }
+}
 
+#[macro_export]
+macro_rules! symbols {
+    ( $register:ident $($name:ident $id:expr)*) => {
+        $(
+            const $name: $crate::Symbol = $crate::Symbol($id);
+        )*
+
+        pub fn $register() {
+            $(
+                $crate::register_symbol($name, stringify!($name));
+            )*
+        }
+    };
+}
+
+impl Symbol {
     pub fn name(&self) -> &'static str {
         SYMBOLS.lock().unwrap()[self].name
     }
