@@ -52,9 +52,12 @@ macro_rules! symbols {
         )*
 
         pub fn $register() {
-            $(
-                $crate::register_symbol($name, stringify!($name));
-            )*
+            static INIT: ::std::sync::Once = ::std::sync::ONCE_INIT;
+            INIT.call_once(|| {
+                $(
+                    $crate::register_symbol($name, stringify!($name));
+                )*
+            })
         }
     };
 }
