@@ -11,6 +11,7 @@ use std::collections::hash_map::{Entry, HashMap};
 mod text;
 mod top_down_builder;
 mod bottom_up_builder;
+pub mod search;
 
 pub use text::{TextRange, TextUnit};
 pub use top_down_builder::TopDownBuilder;
