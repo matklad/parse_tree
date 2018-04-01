@@ -25,7 +25,7 @@ impl TopDownBuilder {
 
     /// Completes the building process and yields a `ParseTree.
     /// Panics if there's unmatched `start_internal` calls.
-    pub fn finish(self) -> ParseTree {
+    pub fn finish(self, text: String) -> ParseTree {
         assert!(
             self.in_progress.is_empty(),
             "some nodes in Builder are unfinished: {:?}",
@@ -34,7 +34,7 @@ impl TopDownBuilder {
                 .map(|&(idx, _)| self.nodes[idx].symbol)
                 .collect::<Vec<_>>()
         );
-        ParseTree { nodes: self.nodes, root: NodeIdx(0) }
+        ParseTree { nodes: self.nodes, root: NodeIdx(0), text }
     }
 
     /// Creates a new leaf node.

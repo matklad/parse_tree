@@ -87,6 +87,7 @@ pub struct Token {
 pub struct ParseTree {
     root: NodeIdx,
     nodes: Vec<NodeData>,
+    text: String,
 }
 
 impl ParseTree {
@@ -107,6 +108,14 @@ pub struct Node<'t> {
     idx: NodeIdx,
 }
 
+impl<'f> cmp::PartialEq<Node<'f>> for Node<'f> {
+    fn eq(&self, other: &Node<'f>) -> bool {
+        self.idx == other.idx && ptr::eq(self.file, other.file)
+    }
+}
+
+impl<'f> cmp::Eq for Node<'f> {}
+
 impl<'t> Node<'t> {
     /// The symbol of the token at this node.
     pub fn symbol(&self) -> Symbol {
@@ -116,6 +125,12 @@ impl<'t> Node<'t> {
     /// The text range covered by the token at this node.
     pub fn range(&self) -> TextRange {
         self.data().range
+    }
+
+    /// The text of this node.
+    pub fn text(&self) -> &'t str {
+        let text: &str = self.file.text.as_ref();
+        &text[self.range()]
     }
 
     /// The parent node of this node.
@@ -149,35 +164,26 @@ impl<'t> fmt::Debug for Node<'t> {
 }
 
 /// Debug representation of a subtree at `node`.
-pub fn debug_dump(node: Node, text: &str) -> String {
+pub fn debug_dump(node: Node) -> String {
     let mut result = String::new();
-    go(node, &mut result, 0, text);
+    go(node, &mut result, 0);
     return result;
 
-    fn go(node: Node, buff: &mut String, level: usize, text: &str) {
+    fn go(node: Node, buff: &mut String, level: usize) {
         buff.push_str(&String::from("  ").repeat(level));
         buff.push_str(&format!("{:?}", node));
 
         if node.children().next().is_none() {
-            let node_text = &text[node.range()];
-            if !node_text.chars().all(char::is_whitespace) {
-                buff.push_str(&format!(" {:?}", node_text));
+            if !node.text().chars().all(char::is_whitespace) {
+                buff.push_str(&format!(" {:?}", node.text()));
             }
         }
         buff.push('\n');
         for child in node.children() {
-            go(child, buff, level + 1, text)
+            go(child, buff, level + 1)
         }
     }
 }
-
-impl<'f> cmp::PartialEq<Node<'f>> for Node<'f> {
-    fn eq(&self, other: &Node<'f>) -> bool {
-        self.idx == other.idx && ptr::eq(self.file, other.file)
-    }
-}
-
-impl<'f> cmp::Eq for Node<'f> {}
 
 #[derive(Debug, Clone)]
 pub struct Children<'f> {
