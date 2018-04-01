@@ -179,7 +179,7 @@ impl<'f> cmp::PartialEq<Node<'f>> for Node<'f> {
 
 impl<'f> cmp::Eq for Node<'f> {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Children<'f> {
     next: Option<Node<'f>>,
 }
