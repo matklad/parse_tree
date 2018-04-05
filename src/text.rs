@@ -11,6 +11,12 @@ impl TextUnit {
     }
 }
 
+impl Default for TextUnit {
+    fn default() -> Self {
+        TextUnit(0)
+    }
+}
+
 impl fmt::Debug for TextUnit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         <Self as fmt::Display>::fmt(self, f)
