@@ -6,7 +6,7 @@ use super::{NodeData, NodeIdx, ParseTree};
 /// `finish_internal` call. Nodes created within a pair of
 /// `start_internal` / `finish_internal` calls become children of
 /// the internal node.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct TopDownBuilder {
     nodes: Vec<NodeData>,
     in_progress: Vec<(NodeIdx, Option<NodeIdx>)>,
@@ -16,11 +16,7 @@ pub struct TopDownBuilder {
 impl TopDownBuilder {
     /// Create a new builder.
     pub fn new() -> TopDownBuilder {
-        TopDownBuilder {
-            nodes: Vec::new(),
-            in_progress: Vec::new(),
-            pos: TextUnit::new(0),
-        }
+        Self::default()
     }
 
     /// Completes the building process and yields a `ParseTree.

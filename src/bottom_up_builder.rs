@@ -3,7 +3,7 @@ use super::{NodeData, NodeIdx, ParseTree};
 
 /// A builder for creating parse trees by a bottom-up walk over
 /// the tree nodes.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct BottomUpBuilder {
     nodes: Vec<NodeData>,
     stack: Vec<NodeIdx>,
@@ -13,11 +13,7 @@ pub struct BottomUpBuilder {
 impl BottomUpBuilder {
     /// Create a new builder.
     pub fn new() -> BottomUpBuilder {
-        BottomUpBuilder {
-            nodes: Vec::new(),
-            stack: Vec::new(),
-            pos: 0.into(),
-        }
+        Self::default()
     }
 
     /// Completes the building process and yields a `ParseTree.
