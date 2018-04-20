@@ -3,6 +3,7 @@
 //! which remembers all whitespace, comments and other trivia.
 #[macro_use]
 extern crate lazy_static;
+extern crate serde;
 
 use std::{cmp, fmt, ops, ptr};
 use std::sync::Mutex;

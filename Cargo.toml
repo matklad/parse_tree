@@ -1,6 +1,6 @@
 [package]
 name = "parse_tree"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["Aleksey Kladov <aleksey.kladov@gmail.com>"]
 description = "A non-abstract syntax tree type"
 license = "MIT OR Apache-2.0"
@@ -9,3 +9,4 @@ documentation = "https://docs.rs/parse_tree"
 
 [dependencies]
 lazy_static = "1"
+serde = "1"

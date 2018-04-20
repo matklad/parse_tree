@@ -1,3 +1,4 @@
+use serde::{Serialize, Serializer, Deserialize, Deserializer};
 use std::fmt;
 use std::ops;
 
@@ -132,5 +133,31 @@ impl ops::Index<TextRange> for str {
 
     fn index(&self, index: TextRange) -> &str {
         &self[index.start().0 as usize..index.end().0 as usize]
+    }
+}
+
+impl Serialize for TextUnit {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.0.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for TextUnit {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = Deserialize::deserialize(deserializer)?;
+        Ok(TextUnit(value))
+    }
+}
+
+impl Serialize for TextRange {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        (self.start, self.end).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for TextRange {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let (start, end) = Deserialize::deserialize(deserializer)?;
+        Ok(TextRange { start, end })
     }
 }
