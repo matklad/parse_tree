@@ -1,13 +1,9 @@
 //! `parse_tree` is a library to represent so-called parse tree.
 //! A parse tree is a non-abstract AST: it's a generic syntax tree
 //! which remembers all whitespace, comments and other trivia.
-#[macro_use]
-extern crate lazy_static;
 extern crate serde;
 
 use std::{cmp, fmt, ops, ptr};
-use std::sync::Mutex;
-use std::collections::hash_map::{Entry, HashMap};
 
 mod text;
 mod top_down_builder;
@@ -20,60 +16,8 @@ pub use bottom_up_builder::BottomUpBuilder;
 
 /// A type of a syntactic construct, including both leaf tokens
 /// and composite nodes, like "a comma" or "a function".
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Symbol(#[doc(hidden)] pub u32);
-
-struct SymbolInfo {
-    name: &'static str,
-}
-
-lazy_static! {
-    static ref SYMBOLS: Mutex<HashMap<Symbol, SymbolInfo>>
-        = Mutex::new(HashMap::new());
-}
-
-#[doc(hidden)]
-pub fn register_symbol(symbol: Symbol, name: &'static str) {
-    let mut symbols = SYMBOLS.lock().unwrap();
-    match symbols.entry(symbol) {
-        Entry::Occupied(_) => {
-            panic!("Duplicate symbol {} {}", symbol.0, name);
-        }
-        Entry::Vacant(entry) => {
-            entry.insert(SymbolInfo { name });
-        }
-    }
-}
-
-#[macro_export]
-macro_rules! symbols {
-    ( $register:ident $($name:ident $id:expr)*) => {
-        $(
-            pub const $name: $crate::Symbol = $crate::Symbol($id);
-        )*
-
-        pub fn $register() {
-            static INIT: ::std::sync::Once = ::std::sync::ONCE_INIT;
-            INIT.call_once(|| {
-                $(
-                    $crate::register_symbol($name, stringify!($name));
-                )*
-            })
-        }
-    };
-}
-
-impl Symbol {
-    pub fn name(&self) -> &'static str {
-        SYMBOLS.lock().unwrap()[self].name
-    }
-}
-
-impl fmt::Debug for Symbol {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "`{}", self.name())
-    }
-}
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct Symbol(pub u32);
 
 /// A token of source code.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -154,31 +98,44 @@ impl<'t> Node<'t> {
 
 impl<'t> fmt::Debug for Node<'t> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}@{:?}", self.symbol().name(), self.range())
+        write!(fmt, "{:?}@{:?}", self.symbol(), self.range())
     }
 }
 
 /// Debug representation of a subtree at `node`.
-pub fn debug_dump<'t>(node: Node, get_text: &'t Fn(TextRange) -> &'t str) -> String {
-    let mut result = String::new();
-    go(node, &mut result, 0, get_text);
-    return result;
+pub fn debug_dump<'t>(
+    node: Node,
+    get_text: &'t Fn(TextRange) -> &'t str,
+    get_symbol_name: &'t Fn(Symbol) -> &'t str,
+) -> String {
+    struct Dumper<'a> {
+        buff: String,
+        get_text: &'a Fn(TextRange) -> &'a str,
+        get_symbol_name: &'a Fn(Symbol) -> &'a str,
+    }
 
-    fn go<'t>(node: Node, buff: &mut String, level: usize, get_text: &'t Fn(TextRange) -> &'t str) {
-        buff.push_str(&String::from("  ").repeat(level));
-        buff.push_str(&format!("{:?}", node));
+    impl<'a> Dumper<'a> {
+        fn go(&mut self, node: Node, level: usize) {
+            self.buff.push_str(&String::from("  ").repeat(level));
+            let s = (self.get_symbol_name)(node.symbol());
+            self.buff.push_str(&format!("{}@{:?}", s, node.range()));
 
-        if node.children().next().is_none() {
-            let text = get_text(node.range());
-            if !text.chars().all(char::is_whitespace) {
-                buff.push_str(&format!(" {:?}", text));
+            if node.children().next().is_none() {
+                let text = (self.get_text)(node.range());
+                if !text.chars().all(char::is_whitespace) {
+                    self.buff.push_str(&format!(" {:?}", text));
+                }
+            }
+            self.buff.push('\n');
+            for child in node.children() {
+                self.go(child, level + 1)
             }
         }
-        buff.push('\n');
-        for child in node.children() {
-            go(child, buff, level + 1, get_text)
-        }
     }
+
+    let mut dumper = Dumper { buff: String::new(), get_text, get_symbol_name };
+    dumper.go(node, 0);
+    return dumper.buff;
 }
 
 #[derive(Debug, Clone)]

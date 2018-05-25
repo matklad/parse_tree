@@ -1,19 +1,24 @@
-#[macro_use]
 extern crate parse_tree;
 
-symbols! {
-    register
-    WHITESPACE 0
-    NUMBER 1
-    STAR 2
-    MUL_EXPR 3
-}
+use parse_tree::Symbol;
 
+const WHITESPACE: Symbol = Symbol(0);
+const NUMBER: Symbol = Symbol(1);
+const STAR: Symbol = Symbol(2);
+const MUL_EXPR: Symbol = Symbol(3);
+
+fn get_symbol_name(s: Symbol) -> &'static str {
+    match s {
+        WHITESPACE => "WHITESPACE",
+        NUMBER => "NUMBER",
+        STAR => "STAR",
+        MUL_EXPR => "MUL_EXPR",
+        _ => panic!("unknown symbol: {:?}", s)
+    }
+}
 
 #[test]
 fn top_down() {
-    register();
-
     let text = "46 * 2";
 
     let tree = {
@@ -28,7 +33,11 @@ fn top_down() {
         builder.finish()
     };
 
-    let debug = parse_tree::debug_dump(tree.root(), &|range| &text[range]);
+    let debug = parse_tree::debug_dump(
+        tree.root(),
+        &|range| &text[range],
+        &get_symbol_name
+    );
     assert_eq!(
         debug.trim(),
         r#"
@@ -44,8 +53,6 @@ MUL_EXPR@[0; 6)
 
 #[test]
 fn bottom_up() {
-    register();
-
     let text = "46 * 2";
 
     let tree = {
@@ -59,7 +66,11 @@ fn bottom_up() {
         builder.finish()
     };
 
-    let debug = parse_tree::debug_dump(tree.root(), &|range| &text[range]);
+    let debug = parse_tree::debug_dump(
+        tree.root(),
+        &|range| &text[range],
+        &get_symbol_name
+    );
     assert_eq!(
         debug.trim(),
         r#"
