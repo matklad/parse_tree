@@ -18,7 +18,7 @@ impl BottomUpBuilder {
 
     /// Completes the building process and yields a `ParseTree.
     /// Panics if there's unmatched `start_internal` calls.
-    pub fn finish(mut self, text: String) -> ParseTree {
+    pub fn finish(mut self) -> ParseTree {
         assert_eq!(
             self.stack.len(),
             1,
@@ -30,7 +30,7 @@ impl BottomUpBuilder {
         );
         let nodes = self.nodes;
         let root = self.stack.pop().unwrap();
-        ParseTree { nodes, root, text }
+        ParseTree { nodes, root }
     }
 
     /// Shifts a new leaf node to the stack.

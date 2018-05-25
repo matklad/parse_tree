@@ -89,7 +89,6 @@ pub struct Token {
 pub struct ParseTree {
     root: NodeIdx,
     nodes: Vec<NodeData>,
-    text: String,
 }
 
 impl ParseTree {
@@ -129,12 +128,6 @@ impl<'t> Node<'t> {
         self.data().range
     }
 
-    /// The text of this node.
-    pub fn text(&self) -> &'t str {
-        let text: &str = self.file.text.as_ref();
-        &text[self.range()]
-    }
-
     /// The parent node of this node.
     pub fn parent(&self) -> Option<Node<'t>> {
         self.as_node(self.data().parent)
@@ -166,23 +159,24 @@ impl<'t> fmt::Debug for Node<'t> {
 }
 
 /// Debug representation of a subtree at `node`.
-pub fn debug_dump(node: Node) -> String {
+pub fn debug_dump<'t>(node: Node, get_text: &'t Fn(TextRange) -> &'t str) -> String {
     let mut result = String::new();
-    go(node, &mut result, 0);
+    go(node, &mut result, 0, get_text);
     return result;
 
-    fn go(node: Node, buff: &mut String, level: usize) {
+    fn go<'t>(node: Node, buff: &mut String, level: usize, get_text: &'t Fn(TextRange) -> &'t str) {
         buff.push_str(&String::from("  ").repeat(level));
         buff.push_str(&format!("{:?}", node));
 
         if node.children().next().is_none() {
-            if !node.text().chars().all(char::is_whitespace) {
-                buff.push_str(&format!(" {:?}", node.text()));
+            let text = get_text(node.range());
+            if !text.chars().all(char::is_whitespace) {
+                buff.push_str(&format!(" {:?}", text));
             }
         }
         buff.push('\n');
         for child in node.children() {
-            go(child, buff, level + 1)
+            go(child, buff, level + 1, get_text)
         }
     }
 }

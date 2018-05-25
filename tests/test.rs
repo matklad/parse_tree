@@ -25,10 +25,10 @@ fn top_down() {
         builder.leaf(WHITESPACE, 1.into());
         builder.leaf(NUMBER, 1.into());
         builder.finish_internal();
-        builder.finish(text.to_string())
+        builder.finish()
     };
 
-    let debug = parse_tree::debug_dump(tree.root());
+    let debug = parse_tree::debug_dump(tree.root(), &|range| &text[range]);
     assert_eq!(
         debug.trim(),
         r#"
@@ -56,10 +56,10 @@ fn bottom_up() {
         builder.shift(WHITESPACE, 1.into());
         builder.shift(NUMBER, 1.into());
         builder.reduce(MUL_EXPR, 5);
-        builder.finish(text.to_string())
+        builder.finish()
     };
 
-    let debug = parse_tree::debug_dump(tree.root());
+    let debug = parse_tree::debug_dump(tree.root(), &|range| &text[range]);
     assert_eq!(
         debug.trim(),
         r#"
