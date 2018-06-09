@@ -136,6 +136,15 @@ impl ops::Index<TextRange> for str {
     }
 }
 
+impl ops::Index<TextRange> for String {
+    type Output = str;
+
+    fn index(&self, index: TextRange) -> &str {
+        &self.as_str()[index]
+    }
+}
+
+
 impl Serialize for TextUnit {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.0.serialize(serializer)

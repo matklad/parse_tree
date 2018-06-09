@@ -1,19 +1,44 @@
 extern crate parse_tree;
 
-use parse_tree::Symbol;
+use parse_tree::{
+    Symbol, ParseTree, PtNodeId,
+    algo::{AsParseTree, GetSymbol, GetText},
+};
 
 const WHITESPACE: Symbol = Symbol(0);
 const NUMBER: Symbol = Symbol(1);
 const STAR: Symbol = Symbol(2);
 const MUL_EXPR: Symbol = Symbol(3);
 
-fn get_symbol_name(s: Symbol) -> &'static str {
-    match s {
-        WHITESPACE => "WHITESPACE",
-        NUMBER => "NUMBER",
-        STAR => "STAR",
-        MUL_EXPR => "MUL_EXPR",
-        _ => panic!("unknown symbol: {:?}", s)
+struct TestTree {
+    text: String,
+    tree: ParseTree,
+}
+
+impl AsParseTree for TestTree {
+    fn as_parse_tree(&self) -> &ParseTree {
+        &self.tree
+    }
+}
+
+impl GetText for TestTree {
+    fn get_text(&self, id: PtNodeId) -> String {
+        let range = self.tree[id].range();
+        self.text[range].to_owned()
+    }
+}
+
+impl GetSymbol for TestTree {
+    fn get_symbol(&self, id: PtNodeId) -> String {
+        let symbol = self.tree[id].symbol();
+        let name = match symbol {
+            WHITESPACE => "WHITESPACE",
+            NUMBER => "NUMBER",
+            STAR => "STAR",
+            MUL_EXPR => "MUL_EXPR",
+            _ => panic!("unknown symbol: {:?}", symbol)
+        };
+        name.to_owned()
     }
 }
 
@@ -32,12 +57,12 @@ fn top_down() {
         builder.finish_internal();
         builder.finish()
     };
+    let tree = TestTree {
+        text: text.to_string(),
+        tree
+    };
 
-    let debug = parse_tree::debug_dump(
-        tree.root(),
-        &|range| &text[range],
-        &get_symbol_name
-    );
+    let debug = parse_tree::algo::debug_dump(&tree);
     assert_eq!(
         debug.trim(),
         r#"
@@ -66,11 +91,12 @@ fn bottom_up() {
         builder.finish()
     };
 
-    let debug = parse_tree::debug_dump(
-        tree.root(),
-        &|range| &text[range],
-        &get_symbol_name
-    );
+    let tree = TestTree {
+        text: text.to_string(),
+        tree
+    };
+
+    let debug = parse_tree::algo::debug_dump(&tree);
     assert_eq!(
         debug.trim(),
         r#"
