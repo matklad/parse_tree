@@ -1,5 +1,5 @@
 use {Symbol, TextRange, TextUnit, fill};
-use super::{NodeData, NodeIdx, ParseTree};
+use super::{PtNode, PtNodeId, ParseTree};
 
 /// A builder for creating parse trees by a top-down walk over
 /// the tree nodes. Each `start_internal` call must be paired with a
@@ -8,8 +8,8 @@ use super::{NodeData, NodeIdx, ParseTree};
 /// the internal node.
 #[derive(Debug, Default)]
 pub struct TopDownBuilder {
-    nodes: Vec<NodeData>,
-    in_progress: Vec<(NodeIdx, Option<NodeIdx>)>,
+    nodes: Vec<PtNode>,
+    in_progress: Vec<(PtNodeId, Option<PtNodeId>)>,
     pos: TextUnit,
 }
 
@@ -30,12 +30,12 @@ impl TopDownBuilder {
                 .map(|&(idx, _)| self.nodes[idx].symbol)
                 .collect::<Vec<_>>()
         );
-        ParseTree { nodes: self.nodes, root: NodeIdx(0) }
+        ParseTree { nodes: self.nodes, root: PtNodeId(0) }
     }
 
     /// Creates a new leaf node.
     pub fn leaf(&mut self, symbol: Symbol, len: TextUnit) {
-        let leaf = NodeData {
+        let leaf = PtNode {
             symbol,
             range: TextRange::from_len(self.pos, len),
             parent: None,
@@ -49,7 +49,7 @@ impl TopDownBuilder {
 
     /// Start a new internal node.
     pub fn start_internal(&mut self, symbol: Symbol) {
-        let node = NodeData {
+        let node = PtNode {
             symbol,
             range: TextRange::from_len(self.pos, 0.into()),
             parent: None,
@@ -75,13 +75,13 @@ impl TopDownBuilder {
         }
     }
 
-    fn new_node(&mut self, data: NodeData) -> NodeIdx {
-        let id = NodeIdx(self.nodes.len() as u32);
+    fn new_node(&mut self, data: PtNode) -> PtNodeId {
+        let id = PtNodeId(self.nodes.len() as u32);
         self.nodes.push(data);
         id
     }
 
-    fn push_child(&mut self, mut child: NodeData) -> NodeIdx {
+    fn push_child(&mut self, mut child: PtNode) -> PtNodeId {
         child.parent = Some(self.current_id());
         let id = self.new_node(child);
         {
@@ -97,16 +97,16 @@ impl TopDownBuilder {
         id
     }
 
-    fn add_len(&mut self, child: NodeIdx) {
+    fn add_len(&mut self, child: PtNodeId) {
         let range = self.nodes[child].range;
         grow(&mut self.current_parent().range, range);
     }
 
-    fn current_id(&self) -> NodeIdx {
+    fn current_id(&self) -> PtNodeId {
         self.in_progress.last().unwrap().0
     }
 
-    fn current_parent(&mut self) -> &mut NodeData {
+    fn current_parent(&mut self) -> &mut PtNode {
         let idx = self.current_id();
         &mut self.nodes[idx]
     }

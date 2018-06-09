@@ -1,12 +1,12 @@
 use {Symbol, TextRange, TextUnit, fill};
-use super::{NodeData, NodeIdx, ParseTree};
+use super::{PtNode, PtNodeId, ParseTree};
 
 /// A builder for creating parse trees by a bottom-up walk over
 /// the tree nodes.
 #[derive(Debug, Default)]
 pub struct BottomUpBuilder {
-    nodes: Vec<NodeData>,
-    stack: Vec<NodeIdx>,
+    nodes: Vec<PtNode>,
+    stack: Vec<PtNodeId>,
     pos: TextUnit,
 }
 
@@ -35,7 +35,7 @@ impl BottomUpBuilder {
 
     /// Shifts a new leaf node to the stack.
     pub fn shift(&mut self, symbol: Symbol, len: TextUnit) {
-        let leaf = NodeData {
+        let leaf = PtNode {
             symbol,
             range: TextRange::from_len(self.pos, len),
             parent: None,
@@ -56,7 +56,7 @@ impl BottomUpBuilder {
             self.nodes[self.stack[n - 1]].range.end(),
         );
         let first_child = self.stack[n - n_nodes];
-        let parent = self.new_node(NodeData {
+        let parent = self.new_node(PtNode {
             symbol,
             range,
             parent: None,
@@ -79,8 +79,8 @@ impl BottomUpBuilder {
         self.stack.push(parent);
     }
 
-    fn new_node(&mut self, data: NodeData) -> NodeIdx {
-        let id = NodeIdx(self.nodes.len() as u32);
+    fn new_node(&mut self, data: PtNode) -> PtNodeId {
+        let id = PtNodeId(self.nodes.len() as u32);
         self.nodes.push(data);
         id
     }
