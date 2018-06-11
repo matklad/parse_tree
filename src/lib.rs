@@ -9,7 +9,6 @@ mod text;
 mod top_down_builder;
 mod bottom_up_builder;
 pub mod algo;
-pub mod search;
 
 pub use text::{TextRange, TextUnit};
 pub use top_down_builder::TopDownBuilder;
