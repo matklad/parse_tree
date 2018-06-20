@@ -1,16 +1,15 @@
 //! `parse_tree` is a library to represent so-called parse tree.
 //! A parse tree is a non-abstract AST: it's a generic syntax tree
 //! which remembers all whitespace, comments and other trivia.
-extern crate serde;
+extern crate text_unit;
 
 use std::{ops};
 
-mod text;
 mod top_down_builder;
 mod bottom_up_builder;
 pub mod algo;
 
-pub use text::{TextRange, TextUnit};
+pub use text_unit::{TextRange, TextUnit};
 pub use top_down_builder::TopDownBuilder;
 pub use bottom_up_builder::BottomUpBuilder;
 

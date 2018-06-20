@@ -37,7 +37,7 @@ impl TopDownBuilder {
     pub fn leaf(&mut self, symbol: Symbol, len: TextUnit) {
         let leaf = PtNode {
             symbol,
-            range: TextRange::from_len(self.pos, len),
+            range: TextRange::offset_len(self.pos, len),
             parent: None,
             first_child: None,
             next_sibling: None,
@@ -51,7 +51,7 @@ impl TopDownBuilder {
     pub fn start_internal(&mut self, symbol: Symbol) {
         let node = PtNode {
             symbol,
-            range: TextRange::from_len(self.pos, 0.into()),
+            range: TextRange::offset_len(self.pos, 0.into()),
             parent: None,
             first_child: None,
             next_sibling: None,
